@@ -105,6 +105,27 @@ const constructPluginResourcesWithParam = (logForwarding) => {
   return new LogForwardingPlugin(serverless, options);
 };
 
+const constructPluginFunctionsNotNormalized = (logForwarding) => {
+  const options = {};
+  const serverless = createServerless(options, {
+    provider: {
+      region: 'us-moon-1',
+      stage: 'test-stage',
+    },
+    custom: {
+      logForwarding,
+    },
+    functions: {
+      'testFunction-One': {
+      },
+      'testFunction_Two': {
+      },
+    },
+    service: 'test-service',
+  });
+  return new LogForwardingPlugin(serverless, options);
+};
+
 describe('Given a serverless config', () => {
   it('updates the resources object if it already exists', () => {
     const plugin = constructPluginResources(correctConfig);
@@ -121,7 +142,7 @@ describe('Given a serverless config', () => {
             Principal: 'logs.us-moon-1.amazonaws.com',
           },
         },
-        SubscriptionFiltertestFunctionOne: {
+        SubscriptionFilterTestFunctionOne: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
             DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
@@ -132,7 +153,7 @@ describe('Given a serverless config', () => {
             'LogForwardingLambdaPermission',
           ],
         },
-        SubscriptionFiltertestFunctionTwo: {
+        SubscriptionFilterTestFunctionTwo: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
             DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
@@ -163,7 +184,7 @@ describe('Given a serverless config', () => {
             Principal: 'logs.us-moon-1.amazonaws.com',
           },
         },
-        SubscriptionFiltertestFunctionOne: {
+        SubscriptionFilterTestFunctionOne: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
             DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-dev-forward',
@@ -174,7 +195,7 @@ describe('Given a serverless config', () => {
             'LogForwardingLambdaPermission',
           ],
         },
-        SubscriptionFiltertestFunctionTwo: {
+        SubscriptionFilterTestFunctionTwo: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
             DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-dev-forward',
@@ -202,7 +223,7 @@ describe('Given a serverless config', () => {
             Principal: 'logs.us-moon-1.amazonaws.com',
           },
         },
-        SubscriptionFiltertestFunctionOne: {
+        SubscriptionFilterTestFunctionOne: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
             DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
@@ -213,7 +234,7 @@ describe('Given a serverless config', () => {
             'LogForwardingLambdaPermission',
           ],
         },
-        SubscriptionFiltertestFunctionTwo: {
+        SubscriptionFilterTestFunctionTwo: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
             DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
@@ -244,7 +265,7 @@ describe('Given a serverless config', () => {
             Principal: 'logs.us-moon-1.amazonaws.com',
           },
         },
-        SubscriptionFiltertestFunctionOne: {
+        SubscriptionFilterTestFunctionOne: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
             DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
@@ -255,12 +276,51 @@ describe('Given a serverless config', () => {
             'LogForwardingLambdaPermission',
           ],
         },
-        SubscriptionFiltertestFunctionTwo: {
+        SubscriptionFilterTestFunctionTwo: {
           Type: 'AWS::Logs::SubscriptionFilter',
           Properties: {
             DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
             FilterPattern: 'Test Pattern',
             LogGroupName: '/aws/lambda/test-service-test-stage-testFunctionTwo',
+          },
+          DependsOn: [
+            'LogForwardingLambdaPermission',
+          ],
+        },
+      },
+    };
+    plugin.updateResources();
+    expect(plugin.serverless.service.resources).to.eql(expectedResources);
+  });
+  it('normalizes function names', () => {
+    const plugin = constructPluginFunctionsNotNormalized(correctConfigWithFilterPattern);
+    const expectedResources = {
+      Resources: {
+        LogForwardingLambdaPermission: {
+          Type: 'AWS::Lambda::Permission',
+          Properties: {
+            FunctionName: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
+            Action: 'lambda:InvokeFunction',
+            Principal: 'logs.us-moon-1.amazonaws.com',
+          },
+        },
+        SubscriptionFilterTestFunctionDashOne: {
+          Type: 'AWS::Logs::SubscriptionFilter',
+          Properties: {
+            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
+            FilterPattern: 'Test Pattern',
+            LogGroupName: '/aws/lambda/test-service-test-stage-testFunction-One',
+          },
+          DependsOn: [
+            'LogForwardingLambdaPermission',
+          ],
+        },
+        SubscriptionFilterTestFunctionUnderscoreTwo: {
+          Type: 'AWS::Logs::SubscriptionFilter',
+          Properties: {
+            DestinationArn: 'arn:aws:lambda:us-moon-1:314159265358:function:testforward-test-forward',
+            FilterPattern: 'Test Pattern',
+            LogGroupName: '/aws/lambda/test-service-test-stage-testFunction_Two',
           },
           DependsOn: [
             'LogForwardingLambdaPermission',

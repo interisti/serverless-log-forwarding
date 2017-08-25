@@ -77,8 +77,9 @@ class LogForwardingPlugin {
   makeSubscriptionFilter(arn, functionName, filterPattern) {
     const functionObject = this.serverless.service.getFunction(functionName);
     const logGroupName = this.provider.naming.getLogGroupName(functionObject.name);
+    const filterLogicalId = `SubscriptionFilter${this.provider.naming.getNormalizedFunctionName(functionName)}`;
     const filter = {};
-    filter[`SubscriptionFilter${functionName}`] = {
+    filter[filterLogicalId] = {
       Type: 'AWS::Logs::SubscriptionFilter',
       Properties: {
         DestinationArn: arn,
