@@ -20,7 +20,7 @@ class LogForwardingPlugin {
   updateResources() {
     // check if stage is specified in config
     const service = this.serverless.service;
-    const stage = this.serverless.stage;
+    const stage = this.serverless.service.provider.stage;
     if (service.custom.logForwarding.stages &&
       service.custom.logForwarding.stages.indexOf(stage) === -1) {
       this.serverless.cli.log(`Log Forwarding is ignored for ${stage} stage`);
